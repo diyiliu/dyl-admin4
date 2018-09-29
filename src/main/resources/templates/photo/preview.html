@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html dir="ltr" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <meta charset="UTF-8">
+    <title>帝一流</title>
+    <link th:href="@{/assets/libs/elegant_font/style.css}" rel="stylesheet">
+    <link th:href="@{/assets/libs/magnific-popup/magnific-popup.css}" rel="stylesheet">
+    <link th:href="@{/assets/css/gallery.css}" rel="stylesheet">
+</head>
+<body>
+<div layout:fragment="breadcrumb" class="page-breadcrumb">
+    <div class="row el-element-overlay">
+        <div class="col-5 align-self-center">
+            <h4 class="page-title">图片预览</h4>
+        </div>
+        <div class="col-7 align-self-center">
+            <div class="d-flex align-items-center justify-content-end">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="#">Home</a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="#">Photo</a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">Preview</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+<div layout:fragment="container" class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form id="searchFm" method="post"></form>
+                        <input type="hidden" id="page" th:value="${#request.getAttribute('index')}">
+                        <input type="hidden" id="total" th:value="${#request.getAttribute('total')}">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <select id="memType" name="memType.id" data-placeholder="选择类别 ..."
+                                        class="form-control chosen-select">
+                                    <option value=""></option>
+                                    <option th:each="type:${types}" th:selected="${type.id == #request.getAttribute('typeId')}"
+                                            th:value="${type.id}" th:text="${type.name}">
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="offset-md-7 col-md-2">
+                                <ul class="pagination">
+                                    <li class="page-item">
+                                        <button class="btn btn-link page-link" th:disabled="${#request.getAttribute('index') < 1}"
+                                                th:onclick="|submit(${#request.getAttribute('typeId') == null? 0: #request.getAttribute('typeId')},${#request.getAttribute('index') - 1})|" >
+                                            <span data-icon="&#x3c;"></span></button>
+                                    </li>
+                                    <li class="page-item">
+                                        <button class="btn btn-link page-link" th:disabled="${#request.getAttribute('index') + 1 >= #request.getAttribute('total')}"
+                                                th:onclick="|submit(${#request.getAttribute('typeId') == null? 0: #request.getAttribute('typeId')},${#request.getAttribute('index') + 1})|">
+                                            <span data-icon="&#x3d;"></span></button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row el-element-overlay" th:each="body:${bodyList}">
+        <div class="col-lg-3 col-md-6 img-card" th:each="photo:${body.photoList}">
+            <div class="card">
+                <div class="el-card-item">
+                    <div class="el-card-avatar el-overlay-1 popup-gallery">
+                        <img th:src="@{/image/photo/{img}(img = ${photo.thumbName})}" alt="user"/>
+                        <div class="el-overlay">
+                            <ul class="list-style-none el-info">
+                                <li class="el-item">
+                                    <a class="btn default btn-outline el-link"
+                                       th:attr="title=${photo.title}, data-note=${photo.note}"
+                                       th:href="@{/image/photo/{img}(img = ${photo.fileName})}"><i
+                                            class="mdi mdi-magnify-plus"></i></a>
+                                </li>
+                                <li class="el-item">
+                                    <button class="btn default btn-outline el-link btn-link" onclick="edit(this);"
+                                            th:attr="data-id=${photo.id},data-title=${photo.title},data-note=${photo.note}">
+                                        <i class="mdi mdi-link"></i></button>
+                                </li>
+                                <li class="el-item">
+                                    <button class="btn default btn-outline el-link btn-link" onclick="del(this);"
+                                            th:attr="data-pid=${body.id},data-id=${photo.id}"><i class="mdi mdi-delete-forever"></i>
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="el-card-content">
+                        <h4 class="m-b-0" th:text="${photo.title == null? 'Project title': photo.title}">Project
+                            title</h4>
+                        <span class="text-muted" th:text="${photo.note == null? 'subtitle of project': photo.note}">subtitle of project</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-labelledby="modalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalLabel">修改图片</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="preview">
+                                <img src="" id="image" alt="img">
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <form id="form">
+                                <input type="hidden" id="id" name="id">
+                                <div class="form-group">
+                                    <label>标 题</label>
+                                    <input type="text" class="form-control" id="title" name="title" placeholder="标题">
+                                </div>
+                                <div class="form-group">
+                                    <label>描 述</label>
+                                    <textarea class="form-control" id="note" name="note" rows="3"></textarea>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="save">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div layout:fragment="allJs">
+    <script th:src="@{/assets/libs/magnific-popup/jquery.magnific-popup.js}"></script>
+    <script th:inline="javascript">
+
+        $(function () {
+            $('#memType').chosen();
+
+            $('#memType').on('change', function () {
+                var type = $('#memType').val();
+                submit(type, 0);
+            });
+
+            $('.popup-gallery').magnificPopup({
+                delegate: 'a',
+                type: 'image',
+                tLoading: 'Loading image #%curr%...',
+                mainClass: 'mfp-img-mobile',
+                gallery: {
+                    enabled: true,
+                    navigateByImgClick: true,
+                    preload: [0, 1] // Will preload 0 - before current, and 1 after the current image
+                },
+                image: {
+                    tError: '<a href="%url%">The image #%curr%</a> could not be loaded.',
+                    titleSrc: function (item) {
+                        var str = "";
+                        var t = item.el.attr('title');
+                        var n = item.el.data('note');
+
+                        if (t) {
+                            str += t;
+                        }
+                        if (n) {
+
+                            str += '<small>' + n + '</small>';
+                        }
+
+                        return str;
+                    }
+                }
+            });
+
+            $('#save').on('click', function () {
+                var $fm = $('#form');
+                var param = $fm.serialize();
+
+                $.ajax({
+                    type: 'post',
+                    url: /*[[@{/photo/img}]]*/,
+                    data: param,
+                    dataType: "json",
+                    success: function (result) {
+                        if (result == 1) {
+                            alertTip('success', '保存成功');
+                            $('#modal').modal('hide');
+
+                            var type = $('#memType').val();
+                            if (!type){
+                                type = 0;
+                            }
+                            submit(type, $('#page').val());
+                        } else {
+                            alertTip('error', '保存失败');
+                        }
+                    }, error: function () {
+                        alertTip('error', '保存失败');
+                    }
+                });
+            })
+        });
+
+        function edit(a) {
+            var id = $(a).data('id');
+            var t = $(a).data('title');
+            var n = $(a).data('note');
+            var $info = $(a).closest('.popup-gallery');
+            var path = $info.find('img')[0].src;
+
+            $('#id').val(id);
+            $('#title').val(t);
+            $('#note').val(n);
+            $('#image').attr("src", path);
+
+            $('#modal').modal('show');
+        }
+
+        function del(a) {
+            var pid = $(a).data('pid');
+            var id = $(a).data('id');
+            var $photo = $(a).closest('.img-card');
+
+            // 提示
+            swal({
+                    title: "确认删除?",
+                    text: "删除后将无法恢复",
+                    type: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#e67e22",
+                    confirmButtonText: "删除",
+                    closeOnConfirm: true
+                },
+                function () {
+                    var path = /*[[@{/photo/img/}]]*/
+                        path += pid + '/' + id;
+                        $.ajax({
+                            type: 'delete',
+                            url: path,
+                            dataType: "json",
+                            success: function (result) {
+                                if (result == 1) {
+                                    alertTip('success', '删除成功');
+                                    $photo.fadeOut();
+                                } else {
+                                    alertTip('error', '删除失败');
+                                }
+                            }, error: function () {
+                                alertTip('error', '删除失败');
+                            }
+                        });
+                });
+        }
+
+        function submit(type, page) {
+            var path = /*[[@{/home/preview/}]]*/
+
+            $('#searchFm').attr('action', path + type + '/' + page);
+            $('#searchFm').submit();
+        }
+    </script>
+</div>
+</body>
+</html>

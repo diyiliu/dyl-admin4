@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/">
+  <ShortName>Iconfinder</ShortName>
+  <Description>Iconfinder - Icon search made easy</Description>
+  <InputEncoding>UTF-8</InputEncoding>
+  <Image width="16" height="16">https://www.iconfinder.com/design/images/favicon.png</Image>
+  <Url type="text/html" method="GET" template="https://www.iconfinder.com/search/">
+    <Param name="q" value="{searchTerms}"/>
+  </Url>
+  <SearchForm>https://www.iconfinder.com</SearchForm>
+</SearchPlugin>

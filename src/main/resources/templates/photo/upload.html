@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html dir="ltr" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <meta charset="UTF-8">
+    <title>帝一流</title>
+    <link th:href="@{/assets/libs/dropzone/basic.css}" rel="stylesheet">
+    <link th:href="@{/assets/libs/dropzone/dropzone.css}" rel="stylesheet">
+    <style>
+        .dropzone {
+            border: 1px dashed #b1b8bb;
+            min-height: 430px;
+        }
+
+        .dropzone .dz-message {
+            color: #a1aab2 !important
+        }
+
+        .dropzone .dz-preview .dz-error-message {
+            display: none !important;
+        }
+
+        .dropzone .dz-preview .dz-remove {
+            position: absolute;
+            left: 50px;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="breadcrumb" class="page-breadcrumb">
+    <div class="row">
+        <div class="col-5 align-self-center">
+            <h4 class="page-title">图片上传</h4>
+        </div>
+        <div class="col-7 align-self-center">
+            <div class="d-flex align-items-center justify-content-end">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="#">Home</a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="#">Photo</a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">Upload</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+<div layout:fragment="container" class="container-fluid">
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title"></h4>
+                    <h6 class="card-subtitle">图片</h6>
+                    <div class="form-group">
+                        <label>拖 拽
+                            <small class="text-muted"><i class="mdi mdi-flower"></i></small>
+                        </label>
+                        <div class="form-control dropzone" id="myDropzone"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="card" id="textCard">
+                <form id="myForm" method="post">
+                    <div class="card-body">
+                        <h4 class="card-title"></h4>
+                        <h6 class="card-subtitle">文字</h6>
+
+                        <input type="hidden" id="photos" name="photos">
+                        <div class="form-group">
+                            <label>类 别
+                                <small class="text-muted">
+                                    <a href="javascript: void(0)" id="addType">
+                                        <i class="text-success mdi mdi-bookmark-plus"></i>
+                                    </a>
+                                </small>
+                            </label>
+                            <select id="memType" name="memType.id" value="0" data-placeholder="选择类别 ..."
+                                    class="form-control chosen-select">
+                                <option value=""></option>
+                                <option th:each="type:${#request.getAttribute('types')}"
+                                        th:value="${type.id}" th:text="${type.name}">
+                                </option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>日 期
+                                <small class="text-muted">yyyy-mm-dd</small>
+                            </label>
+                            <input type="text" class="form-control" id="day"
+                                   name="dayStr" placeholder="日期">
+                        </div>
+                        <div class="form-group">
+                            <label>标 题
+                                <small class="text-muted"><i class="mdi mdi-format-title"></i></small>
+                            </label>
+                            <input type="text" class="form-control" id="subject" name="subject" placeholder="标题">
+                        </div>
+                        <div class="form-group">
+                            <label>描 述
+                                <small class="text-muted"><i class="mdi mdi-grease-pencil"></i></small>
+                            </label>
+                            <textarea class="form-control" id="content" name="content" rows="5"></textarea>
+                        </div>
+                    </div>
+                </form>
+                <div class="border-top">
+                    <div class="card-body">
+                        <button type="button" class="btn btn-primary" id="save">保存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div layout:fragment="allJs">
+    <script th:src="@{/assets/libs/dropzone/dropzone.js}"></script>
+    <script th:src="@{/assets/libs/jquery-resize/jquery.resize.js}"></script>
+    <script th:inline="javascript">
+        Dropzone.options.myDropzone = false;
+        $(function () {
+            // 设置默认过期时间
+            var date = new Date();
+            laydate.render({
+                elem: '#day'
+                , type: 'date'
+                , value: date
+            });
+
+            $('#memType').chosen();
+            // chosen 适应 DIV 大小
+            $('#textCard').resize(function () {
+                $('#memType').chosen("destroy");
+                $('#memType').chosen();
+            });
+
+            var myDropzone = new Dropzone("div#myDropzone", {
+                url: /*[[@{/photo/upload}]]*/,
+                maxFilesize: 10,
+                dictDefaultMessage: '支持拖拽',
+                addRemoveLinks: true,
+                dictRemoveFile: '<i style="cursor: pointer" data-dz-remove class="text-secondary  mdi mdi-delete-forever font-20"></i></p>',
+                dictCancelUpload: '<i style="cursor: pointer" data-dz-remove class="text-secondary  mdi mdi-close font-20"></i></p>',
+                acceptedFiles: "image/*"
+            });
+            myDropzone.on("error", function (file, errorMessage) {
+                var msg = file.name + ":" + errorMessage;
+                alertTip('error', msg);
+            });
+
+            var p = 100;
+            myDropzone.on("addedfile", function (file) {
+                p = 0;
+            });
+            myDropzone.on("sending", function (file) {
+                p = 1;
+            });
+            myDropzone.on("totaluploadprogress", function (i) {
+                p = i;
+            });
+            myDropzone.on("queuecomplete", function () {
+                p = 100;
+            });
+
+            $('#save').on('click', function () {
+                if (p < 100) {
+                    swal("请稍后!", "图片正在上传中 ... ");
+                    return;
+                }
+
+                var files = myDropzone.getAcceptedFiles();
+                if (files.length < 1 || $('#memType').val() < 1) {
+                    swal("请添加图片或选择分类!", "选择类别并且上传至少一张图片");
+                    return;
+                }
+
+                var names = '';
+                for (var i = 0; i < files.length; i++) {
+                    names += files[i].name + ',';
+                }
+                $('#photos').val(names);
+
+                $.ajax({
+                    type: 'post',
+                    url: /*[[@{/photo/save}]]*/,
+                    data: $('#myForm').serialize(),
+                    dataType: "json",
+                    beforeSend: function(){
+                        $('.fakeloader').fadeIn();
+                    },
+                    complete: function(){
+                        $('.fakeloader').fadeOut();
+                    },
+                    success: function (result) {
+                        if (result == 1) {
+                            alertTip('success', '保存成功');
+                            myDropzone.removeAllFiles(true);
+
+                            swal({
+                                title: "正在跳转到图片预览 ... ",
+                                text: "",
+                                timer: 1000,
+                                showConfirmButton: false
+                            },function () {
+                               var path = /*[[@{/home/preview/}]]*/;
+                                $("#myForm").attr('action', path + $('#memType').val() + '/0');
+                                $('#myForm').submit();
+                            });
+                        } else {
+                            alertTip('error', '保存失败');
+                        }
+                    },
+                    error: function () {
+                        alertTip('error', '保存失败');
+                    }
+                });
+            });
+        });
+
+    </script>
+</div>
+</body>
+</html>

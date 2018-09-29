@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+
+<head>
+    <meta charset="UTF-8">
+    <title>帝一流</title>
+</head>
+
+<body>
+<div layout:fragment="breadcrumb" class="page-breadcrumb">
+    <div class="row">
+        <div class="col-5 align-self-center">
+            <h4 class="page-title">网址管理</h4>
+        </div>
+        <div class="col-7 align-self-center">
+            <div class="d-flex align-items-center justify-content-end">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="#">Home</a>
+                        </li>
+                        <li class="breadcrumb-item">
+                            <a href="#">Guide</a>
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">site</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+<div layout:fragment="container" class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="blockquote-bottom">
+                        <form id="searchFm">
+                            <div class="row">
+                                <div class="col-sm-4 col-md-3">
+                                    <select id="searchType" data-placeholder="选择分组 ..." name="typeId"
+                                            class="form-control chosen-select">
+                                        <option value=""></option>
+                                        <option th:each="type:${#request.getAttribute('types')}" th:value="${type.id}"
+                                                th:text="${type.name}"></option>
+                                    </select>
+                                </div>
+                                <div class="col-sm-6 col-md-4">
+                                    <input type="text" class="form-control" id="search" name="search" placeholder="名称/网址">
+                                </div>
+                                <div class="col-sm-2 col-md-1 col-md-offset-4">
+                                    <button type="button" class="btn btn-primary btn-block search">查询</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="btn-group-justified" role="group" id="toolbar">
+                        <button type="button" class="btn btn-success" id="addItem" data-title="新增网址">
+                            <i class="fa fa-fw fa-plus"></i>
+                        </button>
+                        <button type="button" class="btn btn-cyan" id="editItem" data-title="修改网址">
+                            <i class="fa fa-fw fa-pencil"></i>
+                        </button>
+                        <button type="button" class="btn btn-danger" id="delItem" th:attr="data-url=@{/guide/site}">
+                            <i class="fa fa-fw fa-trash-o"></i>
+                        </button>
+                        <button type="button" class="btn btn-warning" id="editType" title="添加分组">
+                            <i class="fa fa-fw fa-file-text-o"></i>
+                        </button>
+                    </div>
+                    <table id="myTable"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="myModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">添加用户</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal" id="siteForm">
+                        <input type="hidden" id="id" name="id">
+                        <div class="form-group row">
+                            <label for="name" class="col-sm-2 control-label text-right col-form-label">名称</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="name" name="name" placeholder="名称">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="url" class="col-sm-2 control-label text-right col-form-label">网址</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="url" name="url" placeholder="网址">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="selType" class="col-sm-2 control-label text-right col-form-label">分组</label>
+                            <div class="col-sm-10">
+                                <select id="selType" data-placeholder="选择分组 ..." name="siteType.id"
+                                        class="form-control chosen-select">
+                                    <option value=""></option>
+                                    <option th:each="type:${#request.getAttribute('types')}" th:value="${type.id}"
+                                            th:text="${type.name}"></option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="sort" class="col-sm-2 control-label text-right col-form-label">排序</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="sort" name="sort" placeholder="排序"
+                                       value="0">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="comment" class="col-sm-2 control-label text-right col-form-label">描述</label>
+                            <div class="col-sm-10">
+                                <textarea class="form-control" name="comment" id="comment" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveItem" th:attr="data-url=@{/guide/site}">保存</button>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+    <div id="typeModal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">编辑分组</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-tag">
+                        <input id="typeTag" type="text" class="tags"/>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveType">保存</button>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+</div>
+<div layout:fragment="allJs">
+    <script th:inline="javascript">
+        $(function () {
+            $('#searchType').chosen({allow_single_deselect: true});
+
+            DP.init({
+                addAfter: function () {
+                    $('#selType').chosen("destroy");
+                    $('#selType').chosen();
+
+                    $('#id').val('');
+                    document.getElementById('url').readOnly = false;
+                },
+                editAfter: function (i) {
+                    var site = $table.bootstrapTable('getRowByUniqueId', i);
+                    // 重置表单
+                    document.getElementById('url').readOnly = true;
+
+                    $('#id').val(site['id']);
+                    $('#name').val(site['name']);
+                    $('#url').val(site['url']);
+                    $('#sort').val(site['sort']);
+                    $('#comment').val(site['comment']);
+
+                    $('#selType').chosen("destroy");
+                    var type = site['siteType'];
+                    if (type) {
+                        var tpeId = type.id;
+                        var options = document.getElementById('selType').options;
+                        for (var i = 0; i < options.length; i++) {
+                            var o = options[i];
+                            if (o.value == tpeId) {
+                                o.selected = true;
+                            }
+                        }
+                    }
+                    $('#selType').chosen();
+                }
+            });
+
+            var rowHeight = $('.blockquote-bottom').height();
+            var tableHeight = $("div.container-fluid").height() - rowHeight - 95;
+            DP.table.init({
+                height: tableHeight,
+                classes: 'table table-no-bordered',
+                url: /*[[@{/guide/list}]]*/,
+                columns: [
+                    {
+                        field: 'ck',
+                        checkbox: true
+                    },
+                    {
+                        field: 'name',
+                        title: '名称'
+                    },
+                    {
+                        field: 'url',
+                        title: '网址'
+                    },
+                    {
+                        field: 'siteType',
+                        title: '分组',
+                        formatter: function (value, row, index) {
+
+                            return value.name;
+                        }
+                    },
+                    {
+                        field: 'comment',
+                        title: '描述'
+                    },
+                    {
+                        field: 'image',
+                        title: '图标',
+                        align: 'center',
+                        formatter: function (value, row, index) {
+                            // 相对路径
+                            var path = /*[[@{/}]]*/;
+                            return '<img style="display: inline-block;width: 16px;height: 16px;" src=' + path + 'image/guide/' + value + '>';
+                        }
+                    },
+                    {
+                        field: 'createTime',
+                        title: '创建时间',
+                        align: 'center'
+                    }
+                ]
+            });
+
+            // 字符串处理
+            var typeNames = [[${#strings.listJoin(#request.getAttribute('tNames'),',')}]];
+            $('#typeTag').tagsInput({defaultText: '新增', width: 'auto', height: 260});
+            $('#editType').on('click', function () {
+                if (typeNames){
+                    $('#typeTag').importTags(typeNames);
+                }
+                $('#typeModal').modal('show');
+            });
+
+            $('#saveType').on('click', function () {
+                // 提示
+                swal({
+                        title: "确定修改网站分组?",
+                        text: "删除分组后的网站将无法显示",
+                        type: "warning",
+                        showCancelButton: true,
+                        confirmButtonColor: "#e67e22",
+                        confirmButtonText: "保存",
+                        closeOnConfirm: true
+                    },
+                    function () {
+                        $.ajax({
+                            type: 'put',
+                            url: /*[[@{/guide/type}]]*/,
+                            data: {typeNames: $('#typeTag').val()},
+                            dataType: "json",
+                            success: function (result) {
+                                if (result == 1) {
+                                    $('#typeModal').modal('hide');
+                                    alertTip('success', '保存成功');
+                                    location.reload();
+                                } else {
+                                    alertTip('error', '保存失败');
+                                }
+                            }
+                        });
+                    });
+            });
+        });
+    </script>
+</div>
+</body>
+</html>

@@ -240,12 +240,15 @@ public class HomeController {
         }
 
         // 删除文件
-        org.springframework.core.io.Resource localRes = new UrlResource(picDir + oldIcon);
-        if (localRes.exists()) {
-            if (!localRes.getFile().delete()) {
-                System.err.println("删除文件[{}]失败!");
+        if (StringUtils.isNotEmpty(oldIcon)){
+            org.springframework.core.io.Resource localRes = new UrlResource(picDir + oldIcon);
+            if (localRes.exists()) {
+                if (!localRes.getFile().delete()) {
+                    System.err.println("删除文件失败!");
+                }
             }
         }
+
         // 更新session
         request.getSession().setAttribute("user", user);
 

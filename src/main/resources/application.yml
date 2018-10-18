@@ -1,5 +1,7 @@
-# https://docs.spring.io/spring-boot/docs/2.0.0.RELEASE/reference/htmlsingle/#common-application-properties
+# https://docs.spring.io/spring-boot/docs/2.0.4.RELEASE/reference/htmlsingle/#common-application-properties
 server:
+  servlet:
+    context-path: '/'
   tomcat:
     basedir: ${user.dir}/temp
 

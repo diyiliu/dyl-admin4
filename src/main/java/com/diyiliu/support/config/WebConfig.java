@@ -5,7 +5,13 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import org.apache.catalina.Context;
+import org.apache.catalina.connector.Connector;
+import org.apache.tomcat.util.descriptor.web.SecurityCollection;
+import org.apache.tomcat.util.descriptor.web.SecurityConstraint;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
+import org.springframework.boot.web.servlet.server.ServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -29,6 +35,34 @@ public class WebConfig {
 
     @Resource
     private Environment environment;
+
+    @Bean
+    public ServletWebServerFactory webServerFactory() {
+        int port = environment.getProperty("http.port", Integer.class);
+        int sslPort = environment.getProperty("server.port", Integer.class);
+
+        Connector connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
+        connector.setScheme("http");
+        connector.setPort(port);
+        connector.setSecure(false);
+        connector.setRedirectPort(sslPort);
+
+        TomcatServletWebServerFactory serverFactory = new TomcatServletWebServerFactory() {
+            @Override
+            protected void postProcessContext(Context context) {
+                SecurityConstraint securityConstraint = new SecurityConstraint();
+                securityConstraint.setUserConstraint("CONFIDENTIAL");
+                SecurityCollection collection = new SecurityCollection();
+                collection.addPattern("/*");
+                securityConstraint.addCollection(collection);
+                context.addConstraint(securityConstraint);
+            }
+        };
+        serverFactory.addAdditionalTomcatConnectors(connector);
+
+        return serverFactory;
+    }
+
 
     @Bean
     public RestTemplate restTemplate(ClientHttpRequestFactory factory) {
